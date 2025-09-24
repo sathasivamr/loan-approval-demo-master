@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+                   xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+                   xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
+                   xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
+                   xmlns:di="http://www.omg.org/spec/DD/20100524/DI" 
+                   id="Definition" 
+                   targetNamespace="http://kogito.kie.org">
+
+  <bpmn2:itemDefinition id="_loanApplicationItem" structureRef="com.example.model.loanApplication"/>
+  
+  <bpmn2:process id="loanApproval" 
+                 name="Loan Approval Process" 
+                 isExecutable="true" 
+                 processType="Public">
+                 
+    <bpmn2:extensionElements>
+      <kogito:metadata xmlns:kogito="http://kogito.kie.org">
+        <kogito:version>1.0</kogito:version>
+      </kogito:metadata>
+    </bpmn2:extensionElements>
+                 
+    <bpmn2:property id="loanApplication" itemSubjectRef="_loanApplicationItem"/>
+    
+    <bpmn2:startEvent id="start" name="Start Loan Process">
+      <bpmn2:outgoing>start-rules</bpmn2:outgoing>
+    </bpmn2:startEvent>
+    
+    <bpmn2:businessRuleTask id="applyBasicRules" 
+                           name="Apply Basic Approval Rules">
+      <bpmn2:extensionElements>
+        <kogito:ruleSetName xmlns:kogito="http://kogito.kie.org">basic-approval-rules</kogito:ruleSetName>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>start-basic</bpmn2:incoming>
+      <bpmn2:outgoing>basic-risk</bpmn2:outgoing>
+    </bpmn2:businessRuleTask>
+    
+    <bpmn2:businessRuleTask id="applyRiskRules" 
+                           name="Apply Risk Assessment Rules">
+      <bpmn2:extensionElements>
+        <kogito:ruleSetName xmlns:kogito="http://kogito.kie.org">risk-assessment-rules</kogito:ruleSetName>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>basic-risk</bpmn2:incoming>
+      <bpmn2:outgoing>risk-review</bpmn2:outgoing>
+    </bpmn2:businessRuleTask>
+    
+    <bpmn2:businessRuleTask id="applyReviewRules" 
+                           name="Apply Manual Review Rules">
+      <bpmn2:extensionElements>
+        <kogito:ruleSetName xmlns:kogito="http://kogito.kie.org">manual-review-rules</kogito:ruleSetName>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>risk-review</bpmn2:incoming>
+      <bpmn2:outgoing>review-gateway</bpmn2:outgoing>
+    </bpmn2:businessRuleTask>
+    
+    <bpmn2:exclusiveGateway id="decisionGateway" name="Decision Gateway" gatewayDirection="Diverging">
+      <bpmn2:incoming>review-gateway</bpmn2:incoming>
+      <bpmn2:outgoing>gateway-approved</bpmn2:outgoing>
+      <bpmn2:outgoing>gateway-rejected</bpmn2:outgoing>
+      <bpmn2:outgoing>gateway-highrisk</bpmn2:outgoing>
+      <bpmn2:outgoing>gateway-review</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    
+    <bpmn2:scriptTask id="processApproval" 
+                     name="Process Approval" 
+                     scriptFormat="java">
+      <bpmn2:incoming>gateway-approved</bpmn2:incoming>
+      <bpmn2:outgoing>approval-end</bpmn2:outgoing>
+      <bpmn2:script>
+        System.out.println("✓ Loan APPROVED for: " + loanApplication.getName());
+        System.out.println("  Amount qualified based on income: $" + (loanApplication.getIncome() * 3));
+      </bpmn2:script>
+    </bpmn2:scriptTask>
+    
+    <bpmn2:scriptTask id="processRejection" 
+                     name="Process Rejection" 
+                     scriptFormat="java">
+      <bpmn2:incoming>gateway-rejected</bpmn2:incoming>
+      <bpmn2:outgoing>rejection-end</bpmn2:outgoing>
+      <bpmn2:script>
+        System.out.println("✗ Loan REJECTED for: " + loanApplication.getName());
+        System.out.println("  Reason: Income or credit score criteria not met");
+      </bpmn2:script>
+    </bpmn2:scriptTask>
+    
+    <bpmn2:scriptTask id="processHighRisk" 
+                     name="Process High Risk" 
+                     scriptFormat="java">
+      <bpmn2:incoming>gateway-highrisk</bpmn2:incoming>
+      <bpmn2:outgoing>highrisk-end</bpmn2:outgoing>
+      <bpmn2:script>
+        System.out.println("⚠ High Risk Loan APPROVED for: " + loanApplication.getName());
+        System.out.println("  Special terms: Higher interest rate applies");
+      </bpmn2:script>
+    </bpmn2:scriptTask>
+    
+    <bpmn2:userTask id="manualReview" 
+                   name="Manual Review Task">
+      <bpmn2:extensionElements>
+        <kogito:assignee xmlns:kogito="http://kogito.kie.org">loan-officer</kogito:assignee>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>gateway-review</bpmn2:incoming>
+      <bpmn2:outgoing>review-end</bpmn2:outgoing>
+    </bpmn2:userTask>
+    
+    <bpmn2:endEvent id="endApproved" name="Loan Approved">
+      <bpmn2:incoming>approval-end</bpmn2:incoming>
+    </bpmn2:endEvent>
+    
+    <bpmn2:endEvent id="endRejected" name="Loan Rejected">
+      <bpmn2:incoming>rejection-end</bpmn2:incoming>
+    </bpmn2:endEvent>
+    
+    <bpmn2:endEvent id="endHighRisk" name="High Risk Approved">
+      <bpmn2:incoming>highrisk-end</bpmn2:incoming>
+    </bpmn2:endEvent>
+    
+    <bpmn2:endEvent id="endReview" name="Manual Review">
+      <bpmn2:incoming>review-end</bpmn2:incoming>
+    </bpmn2:endEvent>
+    
+    <!-- Sequence Flows -->
+    <bpmn2:sequenceFlow id="start-basic" sourceRef="start" targetRef="applyBasicRules"/>
+    <bpmn2:sequenceFlow id="basic-risk" sourceRef="applyBasicRules" targetRef="applyRiskRules"/>
+    <bpmn2:sequenceFlow id="risk-review" sourceRef="applyRiskRules" targetRef="applyReviewRules"/>
+    <bpmn2:sequenceFlow id="review-gateway" sourceRef="applyReviewRules" targetRef="decisionGateway"/>
+    
+    <bpmn2:sequenceFlow id="gateway-approved" sourceRef="decisionGateway" targetRef="processApproval">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression" language="java">
+        return "APPROVED".equals(loanApplication.getStatus());
+      </bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    
+    <bpmn2:sequenceFlow id="gateway-rejected" sourceRef="decisionGateway" targetRef="processRejection">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression" language="java">
+        return "REJECTED".equals(loanApplication.getStatus());
+      </bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    
+    <bpmn2:sequenceFlow id="gateway-highrisk" sourceRef="decisionGateway" targetRef="processHighRisk">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression" language="java">
+        return "APPROVED_HIGH_RISK".equals(loanApplication.getStatus());
+      </bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    
+    <bpmn2:sequenceFlow id="gateway-review" sourceRef="decisionGateway" targetRef="manualReview">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression" language="java">
+        return "REVIEW".equals(loanApplication.getStatus()) || "YOUNG_APPLICANT_REVIEW".equals(loanApplication.getStatus());
+      </bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    
+    <bpmn2:sequenceFlow id="approval-end" sourceRef="processApproval" targetRef="endApproved"/>
+    <bpmn2:sequenceFlow id="rejection-end" sourceRef="processRejection" targetRef="endRejected"/>
+    <bpmn2:sequenceFlow id="highrisk-end" sourceRef="processHighRisk" targetRef="endHighRisk"/>
+    <bpmn2:sequenceFlow id="review-end" sourceRef="manualReview" targetRef="endReview"/>
+    
+  </bpmn2:process>
+</bpmn2:definitions>

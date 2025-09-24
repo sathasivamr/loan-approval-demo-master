@@ -1,0 +1,37 @@
+package com.example.rules
+
+import com.example.model.loanApplication
+
+// Risk assessment and conditional approval rules
+rule "High Risk Approval"
+    salience 10
+    when
+        $app : loanApplication(
+            income >= 30000 && income <= 50000,
+            creditScore >= 650 && creditScore <= 700,
+            age >= 25,
+            status == null
+        )
+    then
+        $app.setStatus("APPROVED_HIGH_RISK");
+        System.out.println("⚠ HIGH RISK APPROVAL: Medium income/credit for " + $app.getName());
+        System.out.println("  - Special conditions apply: Higher interest rate, additional documentation required");
+        System.out.println("  - Risk factors: Income $" + $app.getIncome() + ", Credit Score " + $app.getCreditScore());
+end
+
+rule "Young Applicant Special Review"
+    salience 15
+    when
+        $app : loanApplication(
+            age < 25,
+            income >= 25000,
+            creditScore >= 600,
+            status == null
+        )
+    then
+        $app.setStatus("YOUNG_APPLICANT_REVIEW");
+        System.out.println("👤 YOUNG APPLICANT REVIEW: Special assessment for " + $app.getName());
+        System.out.println("  - Age: " + $app.getAge() + " (Under 25 requires additional review)");
+        System.out.println("  - Qualified income: $" + $app.getIncome() + ", Credit: " + $app.getCreditScore());
+        System.out.println("  - Review focus: Employment stability, guarantor requirements");
+end

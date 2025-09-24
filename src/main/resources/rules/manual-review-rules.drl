@@ -1,0 +1,32 @@
+package com.example.rules
+
+import com.example.model.loanApplication
+
+// Manual review and edge case handling rules
+rule "Manual Review Required"
+    salience 5
+    when
+        $app : loanApplication(status == null)
+    then
+        $app.setStatus("REVIEW");
+        System.out.println("📋 MANUAL REVIEW: Application requires human assessment for " + $app.getName());
+        System.out.println("  - Profile: Age " + $app.getAge() + ", Income $" + $app.getIncome() + ", Credit " + $app.getCreditScore());
+        System.out.println("  - Reason: Does not fit standard approval criteria");
+        System.out.println("  - Action: Escalate to senior loan officer for individual assessment");
+end
+
+rule "Borderline Credit Review"
+    salience 8
+    when
+        $app : loanApplication(
+            creditScore >= 500 && creditScore < 600,
+            income >= 20000 && income < 30000,
+            status == null
+        )
+    then
+        $app.setStatus("REVIEW");
+        System.out.println("🔍 BORDERLINE CREDIT REVIEW: Detailed assessment needed for " + $app.getName());
+        System.out.println("  - Credit Score: " + $app.getCreditScore() + " (500-599 range)");
+        System.out.println("  - Income: $" + $app.getIncome() + " (20K-30K range)");
+        System.out.println("  - Required: Credit history analysis, debt-to-income ratio verification");
+end

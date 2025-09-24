@@ -1,0 +1,43 @@
+package rules;
+
+import com.example.model.loanApplication;
+
+rule "Approve Loan"
+when
+    $app : loanApplication( income > 50000, creditScore > 700, age > 21 )
+then
+    $app.setStatus("APPROVED");
+    update($app);
+end
+
+rule "Reject Loan"
+when
+    $app : loanApplication( income < 20000 || creditScore < 500 )
+then
+    $app.setStatus("REJECTED");
+    update($app);
+end
+
+rule "High Risk Approval"
+when
+    $app : loanApplication( income >= 30000, income <= 50000, creditScore >= 650, creditScore <= 700, age >= 25 )
+then
+    $app.setStatus("APPROVED_HIGH_RISK");
+    update($app);
+end
+
+rule "Young Applicant Special Review"
+when
+    $app : loanApplication( age < 25, income >= 25000, creditScore >= 600 )
+then
+    $app.setStatus("YOUNG_APPLICANT_REVIEW");
+    update($app);
+end
+
+rule "Manual Review"
+when
+    $app : loanApplication( status == null )
+then
+    $app.setStatus("REVIEW");
+    update($app);
+end

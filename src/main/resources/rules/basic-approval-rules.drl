@@ -1,0 +1,28 @@
+package com.example.rules
+
+import com.example.model.loanApplication
+
+// Basic approval and rejection rules
+rule "Approve High Income Loan"
+    when
+        $app : loanApplication(income > 50000, creditScore > 700, age >= 18, status == null)
+    then
+        $app.setStatus("APPROVED");
+        System.out.println("✓ APPROVED: High income and excellent credit for " + $app.getName());
+end
+
+rule "Reject Low Income Loan"
+    when
+        $app : loanApplication(income < 20000, status == null)
+    then
+        $app.setStatus("REJECTED");
+        System.out.println("✗ REJECTED: Income too low for " + $app.getName() + " (Income: $" + $app.getIncome() + ")");
+end
+
+rule "Reject Poor Credit Score"
+    when
+        $app : loanApplication(creditScore < 500, status == null)
+    then
+        $app.setStatus("REJECTED");
+        System.out.println("✗ REJECTED: Credit score too low for " + $app.getName() + " (Score: " + $app.getCreditScore() + ")");
+end

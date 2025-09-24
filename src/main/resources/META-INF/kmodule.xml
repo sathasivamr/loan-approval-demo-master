@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kmodule xmlns="http://www.drools.org/xsd/kmodule">
+    <!-- Main knowledge base for all business rules and BPMN processes -->
+    <kbase name="loan-approval" packages="com.example.rules,rules,processes" default="true">
+        <ksession name="ksession-rules" default="true"/>
+    </kbase>
+    
+    <!-- Individual rule knowledge bases for BPMN process stages -->
+    <kbase name="basic-rules" packages="com.example.rules">
+        <ksession name="ksession-basic-rules"/>
+    </kbase>
+    
+    <kbase name="risk-rules" packages="com.example.rules">
+        <ksession name="ksession-risk-rules"/>
+    </kbase>
+    
+    <kbase name="review-rules" packages="com.example.rules">
+        <ksession name="ksession-review-rules"/>
+    </kbase>
+</kmodule>
